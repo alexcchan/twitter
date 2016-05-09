@@ -33,22 +33,27 @@ def clean_kwargs(kwargs):
     for key, value in kwargs.iteritems():
         if hasattr(value, '__iter__'):
             kwargs[key] = ','.join(map(str, value))
-    underscore_keys = [key for key in kwargs if key.find('_')>=0]
-    for key in underscore_keys:
-        val = kwargs.pop(key)
-        kwargs[key.replace('_','-')] = val
+#    underscore_keys = [key for key in kwargs if key.find('_')>=0]
+#    for key in underscore_keys:
+#        val = kwargs.pop(key)
+#        kwargs[key.replace('_','-')] = val
 
 
 class Twitter(object):
 
-    def __init__(self, token=None, api_version=1.1, client_args={}):
+    def __init__(self, token=None, api_version=1.1, client_args=None, client=None):
         self.token = token
         if api_version == 1.1:
             self.mapping_table=mapping_table_v1_1
         else:
             raise ValueError("Unsupported Twitter API Version: %d" %
                     api_version)
-        self.client = httplib2.Http(**client_args)
+        if client_args is None:
+            client_args = {}
+        if client is None:
+            self.client = httplib2.Http(**client_args)
+        else:
+            self.client = client
 
     def __getattr__(self, api_call):
         def call(self, **kwargs):
@@ -84,6 +89,8 @@ class Twitter(object):
                     body = urllib.urlencode(body)
                 elif content_type == 'application/json':
                     body = json.dumps(body)
+        else:
+            body = ''
         try:
             response,content = self.client.request(url, method=method, body=body,
                     headers=headers)
